@@ -1,0 +1,179 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in KabadiGpt system representing one of the 4 verified roles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID (matches Firebase Auth UID)" },
+        "name": { "type": "string", "description": "User full name or enterprise authority name" },
+        "phone": { "type": "string", "description": "Verified phone number" },
+        "role": {
+          "type": "string",
+          "enum": ["HOUSEHOLD", "KABADIWALA", "RECYCLER", "GOVERNMENT"],
+          "description": "Role in the circular waste ecosystem"
+        },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["PENDING", "IDENTITY_VERIFIED", "COMPLIANCE_VERIFIED", "REQUIRES_REVIEW", "REJECTED"],
+          "description": "Verification lifecycle status"
+        },
+        "language": { "type": "string", "description": "User language code (mr, hi, en)" },
+        "latitude": { "type": "number", "description": "GPS latitude coordinate" },
+        "longitude": { "type": "number", "description": "GPS longitude coordinate" },
+        "createdAt": { "type": "string", "description": "Server creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Server update timestamp" }
+      },
+      "required": ["id", "phone", "role", "verificationStatus", "createdAt", "updatedAt"]
+    },
+    "Request": {
+      "title": "Request",
+      "description": "Doorstep scrap pickup request submitted by a household.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique request document ID" },
+        "householdId": { "type": "string", "description": "UID of the household citizen" },
+        "assignedKabadiwalaId": { "type": "string", "description": "UID of assigned collector, if accepted" },
+        "materialTypes": {
+          "type": "string",
+          "description": "List of scrap material types"
+        },
+        "estimatedWeight": { "type": "string", "description": "Estimated weight" },
+        "address": { "type": "string", "description": "Pickup street address" },
+        "latitude": { "type": "number", "description": "GPS latitude coordinate" },
+        "longitude": { "type": "number", "description": "GPS longitude coordinate" },
+        "preferredPickupTime": { "type": "string", "description": "Preferred pickup slot" },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+          "description": "Lifecycle state of the request"
+        },
+        "createdAt": { "type": "string", "description": "Server timestamp of creation" },
+        "updatedAt": { "type": "string", "description": "Server timestamp of update" }
+      },
+      "required": ["id", "householdId", "materialTypes", "address", "status", "createdAt", "updatedAt"]
+    },
+    "Pickup": {
+      "title": "Pickup",
+      "description": "Operational collection fulfillment record between household and kabadiwala.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique pickup operational ID" },
+        "requestId": { "type": "string", "description": "Associated request ID" },
+        "householdId": { "type": "string", "description": "Customer household UID" },
+        "kabadiwalaId": { "type": "string", "description": "Assigned collector UID" },
+        "status": { "type": "string", "description": "Pickup workflow status" },
+        "startedAt": { "type": "string", "description": "Timestamp when collector started transit" },
+        "completedAt": { "type": "string", "description": "Timestamp when collection completed" },
+        "actualWeight": { "type": "number", "description": "Actual scale weight in kg" },
+        "materialBreakdown": { "type": "string", "description": "Itemized weight and rate breakdown" },
+        "totalAmount": { "type": "number", "description": "Final settlement payout in INR" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "requestId", "householdId", "kabadiwalaId", "status", "createdAt"]
+    },
+    "Receipt": {
+      "title": "Receipt",
+      "description": "Cryptographically auditable digital receipt for doorstep weighing settlement.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Receipt document ID" },
+        "pickupId": { "type": "string", "description": "Associated pickup operational ID" },
+        "householdId": { "type": "string", "description": "Household UID" },
+        "kabadiwalaId": { "type": "string", "description": "Kabadiwala UID" },
+        "items": { "type": "string", "description": "Weighed items list" },
+        "totalAmount": { "type": "number", "description": "Total payment in INR" },
+        "createdAt": { "type": "string", "description": "Receipt creation timestamp" }
+      },
+      "required": ["id", "pickupId", "householdId", "kabadiwalaId", "totalAmount", "createdAt"]
+    },
+    "Batch": {
+      "title": "Batch",
+      "description": "Baled scrap batch created at micro-hub for authorized recycler dispatch.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Batch document ID" },
+        "batchId": { "type": "string", "description": "Human-readable batch identifier code" },
+        "createdBy": { "type": "string", "description": "Creator UID" },
+        "kabadiwalaId": { "type": "string", "description": "Originating micro-hub / kabadiwala UID" },
+        "recyclerId": { "type": "string", "description": "Target recycler facility UID, if matched" },
+        "materialType": { "type": "string", "description": "Scrap material specification" },
+        "totalWeight": { "type": "number", "description": "Total weight in kg" },
+        "status": {
+          "type": "string",
+          "enum": ["CREATED", "DISPATCHED", "RECEIVED", "RECYCLED"],
+          "description": "Lifecycle state of the batch"
+        },
+        "createdAt": { "type": "string", "description": "Server creation timestamp" },
+        "receivedAt": { "type": "string", "description": "Timestamp when received by recycler" }
+      },
+      "required": ["id", "batchId", "createdBy", "kabadiwalaId", "materialType", "totalWeight", "status", "createdAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Telemetry and chain-of-custody audit log event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Event ID" },
+        "eventType": { "type": "string", "description": "Event code (e.g. REQUEST_CREATED, WEIGHED, BALED)" },
+        "actorId": { "type": "string", "description": "Actor UID" },
+        "actorRole": { "type": "string", "description": "Role of the actor" },
+        "requestId": { "type": "string", "description": "Linked request ID" },
+        "pickupId": { "type": "string", "description": "Linked pickup ID" },
+        "batchId": { "type": "string", "description": "Linked batch ID" },
+        "weight": { "type": "number", "description": "Recorded weight in kg" },
+        "latitude": { "type": "number", "description": "GPS latitude" },
+        "longitude": { "type": "number", "description": "GPS longitude" },
+        "timestamp": { "type": "string", "description": "Server event timestamp" },
+        "metadata": { "type": "string", "description": "Additional event metadata" }
+      },
+      "required": ["id", "eventType", "actorId", "actorRole", "timestamp"]
+    },
+    "Recycler": {
+      "title": "Recycler",
+      "description": "Authorized recycling mill entity registered with regulatory authorities.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Recycler UID" },
+        "name": { "type": "string", "description": "Recycler business name" },
+        "gstin": { "type": "string", "description": "GSTIN number" },
+        "registrationStatus": { "type": "string", "description": "ACTIVE or PENDING" },
+        "verificationStatus": { "type": "string", "description": "VERIFIED or PENDING" },
+        "facilityLocation": { "type": "string", "description": "Industrial zone address" },
+        "supportedMaterials": { "type": "string", "description": "List of accepted recyclable materials" },
+        "createdAt": { "type": "string", "description": "Registration timestamp" }
+      },
+      "required": ["id", "name", "gstin", "registrationStatus", "verificationStatus", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles representing verified actors."
+    },
+    "/requests/{requestId}": {
+      "schema": { "$ref": "#/entities/Request" },
+      "description": "Household doorstep scrap collection requests."
+    },
+    "/pickups/{pickupId}": {
+      "schema": { "$ref": "#/entities/Pickup" },
+      "description": "Operational pickups linking collectors and citizens."
+    },
+    "/receipts/{receiptId}": {
+      "schema": { "$ref": "#/entities/Receipt" },
+      "description": "Digital weighing receipts and transaction settlement logs."
+    },
+    "/batches/{batchId}": {
+      "schema": { "$ref": "#/entities/Batch" },
+      "description": "Baled scrap batches for B2B recycler matching."
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/Event" },
+      "description": "Audit event ledger for municipal and CPCB traceability."
+    },
+    "/recyclers/{recyclerId}": {
+      "schema": { "$ref": "#/entities/Recycler" },
+      "description": "Authorized recycler facility registry."
+    }
+  }
+}

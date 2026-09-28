@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // USERS COLLECTION
+    // Do not trust user identity sent from client: enforce request.auth.uid == userId and id == request.auth.uid
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isUser(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isUser(userId) && request.resource.data.id == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // REQUESTS COLLECTION
+    // Do not trust householdId sent from client: enforce householdId == request.auth.uid on create
+    match /requests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.householdId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.householdId == request.auth.uid ||
+        request.resource.data.assignedKabadiwalaId == request.auth.uid ||
+        resource.data.assignedKabadiwalaId == request.auth.uid
+      );
+      allow delete: if isAuthenticated() && resource.data.householdId == request.auth.uid;
+    }
+
+    // PICKUPS COLLECTION
+    match /pickups/{pickupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        request.resource.data.kabadiwalaId == request.auth.uid ||
+        request.resource.data.householdId == request.auth.uid
+      );
+      allow update: if isAuthenticated() && (
+        resource.data.kabadiwalaId == request.auth.uid ||
+        resource.data.householdId == request.auth.uid
+      );
+    }
+
+    // RECEIPTS COLLECTION
+    // Kabadiwala records receipt with their verified auth UID
+    match /receipts/{receiptId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.kabadiwalaId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.kabadiwalaId == request.auth.uid;
+    }
+
+    // BATCHES COLLECTION
+    // Creator identity must match authenticated UID
+    match /batches/{batchId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        request.resource.data.createdBy == request.auth.uid ||
+        request.resource.data.kabadiwalaId == request.auth.uid
+      );
+      allow update: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.kabadiwalaId == request.auth.uid ||
+        resource.data.recyclerId == request.auth.uid
+      );
+    }
+
+    // EVENTS COLLECTION
+    // Audit logs must enforce actorId == request.auth.uid to prevent log spoofing
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // RECYCLERS COLLECTION
+    match /recyclers/{recyclerId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+    }
+
+    // MATERIALS & TRACEABILITY (Legacy & Auxiliary collections)
+    match /materials/{materialId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /traceability/{traceabilityId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    match /notifications/{notificationId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

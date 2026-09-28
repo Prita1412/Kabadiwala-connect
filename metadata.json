@@ -1,0 +1,6 @@
+{
+  "name": "KabadiGpt",
+  "description": "Conversational waste-management and circular traceability platform connecting households, kabadiwalas, recyclers, and regulators.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
